@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CEI — Calculadora</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@300;400;500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Barlow',sans-serif;background:#f2f2ef;color:#1a1a1a;min-height:100vh;padding-bottom:80px;}
+
+.header{background:#0D2B5E;padding:18px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start;}
+.header-left .logo{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:#fff;letter-spacing:3px;}
+.header-left .sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
+.quote-badge{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 12px;text-align:right;}
+.quote-badge .qnum{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff;letter-spacing:1px;}
+.quote-badge .qlabel{font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:.05em;}
+
+.body{padding:14px;max-width:560px;margin:0 auto;}
+.step-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#aaa;margin:18px 0 7px;}
+.card{background:#fff;border-radius:14px;border:1px solid #e8e8e4;padding:14px 16px;margin-bottom:10px;}
+
+/* INPUTS */
+.field-row{display:flex;flex-direction:column;gap:5px;padding:9px 0;border-bottom:1px solid #f0f0ea;}
+.field-row:last-child{border-bottom:none;}
+.field-label{font-size:12px;font-weight:600;color:#555;}
+input[type=text],input[type=tel],textarea,select{border:1.5px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;font-family:'Barlow',sans-serif;color:#1a1a1a;width:100%;background:#fff;}
+input[type=text]:focus,input[type=tel]:focus,textarea:focus,select:focus{outline:none;border-color:#0D2B5E;}
+textarea{resize:vertical;min-height:55px;}
+.loc-btn{width:100%;margin-top:5px;padding:8px;border-radius:8px;border:1.5px solid #0D2B5E;background:transparent;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;color:#0D2B5E;cursor:pointer;}
+.loc-btn:hover{background:#0D2B5E;color:#fff;}
+.loc-ok{font-size:11px;color:#16a34a;margin-top:3px;display:none;text-align:center;}
+
+/* SELECTOR BUTTONS */
+.sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:4px;}
+.sel-btn{background:#fff;border:1.5px solid #e0e0e0;border-radius:10px;padding:11px 10px;font-family:'Barlow',sans-serif;font-size:13px;font-weight:500;color:#555;cursor:pointer;text-align:left;line-height:1.4;}
+.sel-btn:hover{border-color:#0D2B5E;color:#0D2B5E;}
+.sel-btn.active{background:#0D2B5E;border-color:#0D2B5E;color:#fff;}
+.sel-btn .hint{font-size:11px;opacity:.6;display:block;margin-top:2px;font-weight:400;}
+.sel-btn.active .hint{opacity:.75;}
+.sel-btn.red:hover{border-color:#C62828;color:#C62828;}
+.sel-btn.red.active{background:#C62828;border-color:#C62828;color:#fff;}
+
+/* BIZ */
+.biz-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.biz-btn{background:#fff;border:1.5px solid #e0e0e0;border-radius:10px;padding:9px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:500;color:#555;cursor:pointer;text-align:left;line-height:1.4;}
+.biz-btn:hover{border-color:#0D2B5E;color:#0D2B5E;}
+.biz-btn.active{background:#0D2B5E;border-color:#0D2B5E;color:#fff;}
+.biz-icon{font-size:14px;display:block;margin-bottom:2px;}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f0f0ea;}
+.toggle-row:last-child{border-bottom:none;}
+.tgl-label{font-size:13px;color:#1a1a1a;font-weight:500;}
+.tgl-note{font-size:11px;color:#aaa;margin-top:2px;}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:#ddd;border-radius:99px;cursor:pointer;transition:background .2s;}
+.toggle input:checked + .toggle-track{background:#0D2B5E;}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none;}
+.toggle input:checked ~ .toggle-thumb{transform:translateX(20px);}
+
+/* ZONES */
+.zone-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.zone-pill{font-size:12px;font-weight:500;padding:6px 12px;border-radius:99px;border:1.5px solid #e0e0e0;background:#fff;color:#555;cursor:pointer;}
+.zone-pill:hover{border-color:#0D2B5E;color:#0D2B5E;}
+.zone-pill.active{background:#0D2B5E;border-color:#0D2B5E;color:#fff;}
+.zone-pill.sp{border-color:#C62828;color:#C62828;}
+.zone-pill.sp.active{background:#C62828;border-color:#C62828;color:#fff;}
+
+/* MANUAL ROW */
+.manual-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ea;gap:12px;}
+.manual-row:last-child{border-bottom:none;}
+.ml{flex:1;}
+.ml-label{font-size:13px;font-weight:500;color:#1a1a1a;}
+.ml-note{font-size:11px;color:#aaa;margin-top:2px;}
+.mr{display:flex;align-items:center;gap:4px;}
+.peso{font-size:14px;color:#aaa;}
+input[type=number].mini{border:1.5px solid #e0e0e0;border-radius:8px;padding:6px 10px;font-size:14px;font-family:'Barlow',sans-serif;font-weight:500;color:#1a1a1a;width:90px;text-align:right;background:#fff;}
+input[type=number].mini:focus{outline:none;border-color:#0D2B5E;}
+
+/* UNITS */
+.units-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.units-title{font-size:14px;font-weight:700;color:#1a1a1a;}
+.add-unit-btn{background:#0D2B5E;border:none;border-radius:8px;padding:7px 14px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;color:#fff;cursor:pointer;}
+.add-unit-btn:hover{background:#0a2244;}
+
+.unit-card{background:#f8f8f6;border:1.5px solid #e8e8e4;border-radius:12px;padding:14px;margin-bottom:10px;position:relative;}
+.unit-card.active-unit{border-color:#0D2B5E;}
+.unit-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.unit-num{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:#0D2B5E;letter-spacing:1px;}
+.unit-subtotal{font-size:13px;font-weight:700;color:#1565C0;}
+.remove-unit{background:none;border:none;color:#ddd;font-size:18px;cursor:pointer;padding:0 4px;}
+.remove-unit:hover{color:#C62828;}
+
+.unit-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.unit-row-label{font-size:11px;font-weight:600;color:#888;letter-spacing:.04em;text-transform:uppercase;}
+.unit-row select{font-size:13px;}
+
+.unit-metros{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.unit-metros label{font-size:12px;color:#555;font-weight:600;min-width:120px;}
+.metros-controls{display:flex;align-items:center;gap:6px;}
+.m-btn{width:28px;height:28px;border-radius:7px;border:1.5px solid #e0e0e0;background:#fff;font-size:15px;font-weight:700;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.m-btn:hover{border-color:#0D2B5E;color:#0D2B5E;}
+.m-val{font-size:14px;font-weight:700;min-width:24px;text-align:center;}
+.m-price{font-size:12px;color:#1565C0;font-weight:600;margin-left:4px;}
+
+.unit-equipo{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:8px 0;border-top:1px solid #eeede8;}
+.unit-equipo-label{font-size:12px;font-weight:600;color:#555;}
+.unit-equipo-note{font-size:11px;color:#aaa;}
+
+/* RESULT */
+.result-card{background:#0D2B5E;border-radius:16px;padding:20px;margin-top:8px;}
+.r-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;color:rgba(255,255,255,0.45);border-bottom:1px solid rgba(255,255,255,0.06);}
+.r-row:last-child{border-bottom:none;}
+.r-row.sec{color:rgba(255,255,255,0.25);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding-top:12px;}
+.r-row.unit-sec{color:rgba(255,255,255,0.55);font-size:12px;font-weight:600;padding-top:10px;}
+.r-val{color:#fff;font-weight:600;}
+.r-val.green{color:#4ade80;}
+.r-val.red{color:#f87171;}
+
+.total-block{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.15);}
+.total-row{display:flex;justify-content:space-between;align-items:center;}
+.total-label{font-size:15px;font-weight:700;color:#fff;}
+.total-val{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;color:#4ade80;}
+.info-pill{display:flex;justify-content:space-between;align-items:center;margin-top:7px;padding:9px 13px;background:rgba(255,255,255,0.05);border-radius:10px;}
+.ip-label{font-size:12px;color:rgba(255,255,255,0.45);}
+.ip-val{font-size:14px;font-weight:700;}
+
+.send-btn{width:100%;margin-top:14px;padding:15px;border-radius:12px;border:none;background:#C62828;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:#fff;cursor:pointer;letter-spacing:2px;}
+.send-btn:hover{background:#b71c1c;}
+.send-btn:disabled{background:#555;cursor:not-allowed;}
+.reset-btn{width:100%;margin-top:8px;padding:11px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);background:transparent;font-family:'Barlow',sans-serif;font-size:13px;color:rgba(255,255,255,0.4);cursor:pointer;}
+.reset-btn:hover{color:rgba(255,255,255,0.65);}
+
+.consult-box{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 13px;font-size:12px;color:#78350f;line-height:1.65;margin-top:10px;}
+.success-box{background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:12px;font-size:13px;color:#166534;margin-top:10px;display:none;text-align:center;font-weight:600;}
+.error-box{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px;font-size:13px;color:#991b1b;margin-top:10px;display:none;text-align:center;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">CEI</div>
+    <div class="sub">Calculadora de precios · GDL 2025</div>
+  </div>
+  <div class="quote-badge">
+    <div class="qlabel">COTIZACIÓN</div>
+    <div class="qnum" id="quote-num">CEI-001</div>
+  </div>
+</div>
+
+<div class="body">
+
+<!-- PASO 1: CLIENTE -->
+<div class="step-label">Paso 1 — Datos del cliente</div>
+<div class="card">
+  <div class="field-row">
+    <div class="field-label">Nombre del cliente <span style="color:#C62828">*</span></div>
+    <input type="text" id="cli-nombre" placeholder="Ej. Juan Martínez">
+  </div>
+  <div class="field-row">
+    <div class="field-label">Teléfono <span style="color:#bbb;font-weight:400;">(opcional)</span></div>
+    <input type="tel" id="cli-tel" placeholder="33-XXXX-XXXX">
+  </div>
+  <div class="field-row">
+    <div class="field-label">Dirección <span style="color:#bbb;font-weight:400;">(opcional)</span></div>
+    <input type="text" id="cli-dir" placeholder="Calle, número, colonia">
+    <button class="loc-btn" onclick="getLocation()">Usar ubicación actual del GPS</button>
+    <div class="loc-ok" id="loc-ok">Ubicación guardada correctamente</div>
+  </div>
+  <div class="field-row">
+    <div class="field-label">Notas <span style="color:#bbb;font-weight:400;">(opcional)</span></div>
+    <textarea id="cli-notas" placeholder="Detalles especiales del trabajo..."></textarea>
+  </div>
+</div>
+
+<!-- PASO 2: TIPO CLIENTE -->
+<div class="step-label">Paso 2 — ¿Casa o negocio?</div>
+<div class="sel-grid">
+  <button class="sel-btn" onclick="setCliente('Casa / Residencia')" id="btn-casa">Casa / Residencia<span class="hint">Departamento · casa habitación</span></button>
+  <button class="sel-btn red" onclick="setCliente('Negocio / Empresa')" id="btn-negocio">Negocio / Empresa<span class="hint">Comercio · oficina · industrial</span></button>
+</div>
+
+<div id="biz-section" style="display:none;">
+  <div class="step-label">Tipo de negocio</div>
+  <div class="card" style="padding:12px;">
+    <div class="biz-grid">
+      <button class="biz-btn" onclick="setBiz(this,'Restaurante / Cocina',1.15)"><span class="biz-icon">🍽</span>Restaurante / Cocina</button>
+      <button class="biz-btn" onclick="setBiz(this,'Oficina / Corporativo',1.10)"><span class="biz-icon">🏢</span>Oficina / Corporativo</button>
+      <button class="biz-btn" onclick="setBiz(this,'Local comercial',1.10)"><span class="biz-icon">🛍</span>Local comercial</button>
+      <button class="biz-btn" onclick="setBiz(this,'Hotel / Hostal',1.15)"><span class="biz-icon">🏨</span>Hotel / Hostal</button>
+      <button class="biz-btn" onclick="setBiz(this,'Gimnasio / Spa',1.10)"><span class="biz-icon">💪</span>Gimnasio / Spa</button>
+      <button class="biz-btn" onclick="setBiz(this,'Clínica / Médico',1.15)"><span class="biz-icon">🏥</span>Clínica / Médico</button>
+      <button class="biz-btn" onclick="setBiz(this,'Salón / Estética',1.08)"><span class="biz-icon">✂</span>Salón / Estética</button>
+      <button class="biz-btn" onclick="setBiz(this,'Farmacia / Tienda',1.10)"><span class="biz-icon">🏪</span>Farmacia / Tienda</button>
+      <button class="biz-btn" onclick="setBiz(this,'Bodega / Almacén',1.12)"><span class="biz-icon">🏭</span>Bodega / Almacén</button>
+      <button class="biz-btn" onclick="setBiz(this,'Escuela / Iglesia',1.08)"><span class="biz-icon">🏫</span>Escuela / Iglesia</button>
+      <button class="biz-btn" onclick="setBiz(this,'Bar / Antro',1.15)"><span class="biz-icon">🍺</span>Bar / Antro</button>
+      <button class="biz-btn" onclick="setBiz(this,'Otro tipo de negocio',1.10)"><span class="biz-icon">🏗</span>Otro tipo</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 3: SERVICIO -->
+<div id="servicio-section" style="display:none;">
+  <div class="step-label">Paso 3 — ¿Qué servicio?</div>
+  <div class="sel-grid">
+    <button class="sel-btn" onclick="setServicio('instalacion')" id="btn-instalacion">Instalación A/C<span class="hint">Minisplit · con o sin equipo</span></button>
+    <button class="sel-btn" onclick="setServicio('mantenimiento')" id="btn-mantenimiento">Mantenimiento<span class="hint">Limpieza profunda</span></button>
+    <button class="sel-btn" onclick="setServicio('reparacion')" id="btn-reparacion">Reparación / Diagnóstico<span class="hint">Falla · urgente</span></button>
+    <button class="sel-btn" onclick="setServicio('electrico')" id="btn-electrico">Eléctrico<span class="hint">Instalación · reparación</span></button>
+    <button class="sel-btn" onclick="setServicio('extractor')" id="btn-extractor">Extractor industrial<span class="hint">Fan & coil · grande</span></button>
+  </div>
+</div>
+
+<!-- PASO 4: DETALLE (non-installation) -->
+<div id="detail-section" style="display:none;">
+  <div class="step-label" id="detail-label">Paso 4 — Detalle</div>
+  <div class="sel-grid" id="detail-grid"></div>
+</div>
+
+<!-- PASO 4b: UNITS (installation) -->
+<div id="units-section" style="display:none;">
+  <div class="step-label">Paso 4 — Unidades a instalar</div>
+  <div class="card">
+    <div class="units-header">
+      <div class="units-title" id="units-count-label">0 unidades</div>
+      <button class="add-unit-btn" onclick="addUnit()">+ Agregar unidad</button>
+    </div>
+    <div id="units-container"></div>
+  </div>
+</div>
+
+<!-- PASO 5: ZONA -->
+<div id="zona-section" style="display:none;">
+  <div class="step-label">Paso 5 — Zona del cliente</div>
+  <div class="card">
+    <div class="zone-grid">
+      <div class="zone-pill active" onclick="setZona(this,0,'GDL Centro')">GDL Centro</div>
+      <div class="zone-pill" onclick="setZona(this,0,'Guadalajara Norte')">Guadalajara Norte</div>
+      <div class="zone-pill" onclick="setZona(this,0,'Guadalajara Sur')">Guadalajara Sur</div>
+      <div class="zone-pill" onclick="setZona(this,0.08,'Providencia')">Providencia</div>
+      <div class="zone-pill" onclick="setZona(this,0.08,'Chapalita')">Chapalita</div>
+      <div class="zone-pill" onclick="setZona(this,0.10,'Puerta de Hierro')">Puerta de Hierro</div>
+      <div class="zone-pill" onclick="setZona(this,0.05,'Zapopan Centro')">Zapopan Centro</div>
+      <div class="zone-pill" onclick="setZona(this,0.05,'Zapopan Norte')">Zapopan Norte</div>
+      <div class="zone-pill" onclick="setZona(this,0.03,'Tlaquepaque')">Tlaquepaque</div>
+      <div class="zone-pill" onclick="setZona(this,0.03,'Tonalá')">Tonalá</div>
+      <div class="zone-pill" onclick="setZona(this,0.05,'Tlajomulco')">Tlajomulco</div>
+      <div class="zone-pill" onclick="setZona(this,0.05,'San Pedro Tlaquepaque')">San Pedro Tlaquepaque</div>
+      <div class="zone-pill" onclick="setZona(this,0.05,'El Salto')">El Salto</div>
+      <div class="zone-pill" onclick="setZona(this,0.05,'Juanacatlán')">Juanacatlán</div>
+      <div class="zone-pill" onclick="setZona(this,0.08,'Chapala')">Chapala</div>
+      <div class="zone-pill sp" onclick="setZona(this,0.15,'Ajijic / Ribera del Lago')">Ajijic / Ribera</div>
+      <div class="zone-pill sp" onclick="setZona(this,0.12,'Jocotepec')">Jocotepec</div>
+      <div class="zone-pill" onclick="setZona(this,0.10,'Ocotlán')">Ocotlán</div>
+      <div class="zone-pill" onclick="setZona(this,0.10,'La Barca')">La Barca</div>
+      <div class="zone-pill" onclick="setZona(this,0.08,'Tepatitlán')">Tepatitlán</div>
+      <div class="zone-pill" onclick="setZona(this,0.10,'Arandas')">Arandas</div>
+      <div class="zone-pill" onclick="setZona(this,0.10,'Ameca')">Ameca</div>
+      <div class="zone-pill" onclick="setZona(this,0.12,'Autlán')">Autlán</div>
+      <div class="zone-pill" onclick="setZona(this,0.12,'Ciudad Guzmán')">Ciudad Guzmán</div>
+      <div class="zone-pill" onclick="setZona(this,0.15,'Colima (límite)')">Colima (límite)</div>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 6: EXTRAS -->
+<div id="extras-section" style="display:none;">
+  <div class="step-label">Paso 6 — Extras y ajustes</div>
+  <div class="card" style="padding:8px 14px;">
+    <div class="toggle-row">
+      <div><div class="tgl-label">Urgencia fuera de horario</div><div class="tgl-note">Después 6pm · fin de semana · festivo</div></div>
+      <label class="toggle"><input type="checkbox" id="toggle-urgente" onchange="calc()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+    </div>
+    <div class="manual-row">
+      <div class="ml"><div class="ml-label">Traslado extra</div><div class="ml-note">Gasolina si el viaje es largo</div></div>
+      <div class="mr"><span class="peso">$</span><input type="number" class="mini" id="traslado-input" min="0" value="0" oninput="calc()"></div>
+    </div>
+    <div class="manual-row">
+      <div class="ml"><div class="ml-label">Otro extra</div><div class="ml-note">Cualquier cargo adicional</div></div>
+      <div class="mr"><span class="peso">$</span><input type="number" class="mini" id="extra-input" min="0" value="0" oninput="calc()"></div>
+    </div>
+    <div class="manual-row">
+      <div class="ml"><div class="ml-label" style="color:#C62828;">Descuento</div><div class="ml-note">Para clientes frecuentes o regateo</div></div>
+      <div class="mr"><span class="peso" style="color:#C62828;">-$</span><input type="number" class="mini" id="descuento-input" min="0" value="0" oninput="calc()" style="border-color:#fca5a5;color:#C62828;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTADO -->
+<div id="result-section" style="display:none;">
+  <div class="result-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.3);">Resumen cotización</div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);" id="r-quote-num">CEI-001</div>
+    </div>
+    <div id="result-rows"></div>
+    <div class="total-block">
+      <div class="total-row">
+        <div class="total-label">Total a cobrar</div>
+        <div class="total-val" id="r-total">$0</div>
+      </div>
+      <div class="info-pill"><div class="ip-label">Anticipo 50%</div><div class="ip-val" style="color:#facc15;" id="r-anticipo">$0</div></div>
+      <div class="info-pill" style="margin-top:6px;"><div class="ip-label">Dar seguimiento</div><div class="ip-val" style="color:#fdba74;" id="r-followup">—</div></div>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="enviarCotizacion()">ENVIAR COTIZACIÓN A CEI</button>
+    <button class="reset-btn" onclick="resetAll()">↺ Nueva cotización</button>
+  </div>
+  <div class="consult-box" id="consult-box" style="display:none;">Este trabajo requiere cotización presencial.</div>
+  <div class="success-box" id="success-box">Cotización enviada correctamente a CEI</div>
+  <div class="error-box" id="error-box">Error al enviar. Verifica tu conexión.</div>
+</div>
+
+</div><!-- /body -->
+
+<script>
+emailjs.init('1E78XOVEOkh49VfWe');
+
+// ── QUOTE NUMBER ──
+let quoteNum = parseInt(localStorage.getItem('cei_quote_num')||'0') + 1;
+localStorage.setItem('cei_quote_num', quoteNum);
+const qStr = 'CEI-' + String(quoteNum).padStart(3,'0');
+document.getElementById('quote-num').textContent = qStr;
+document.getElementById('r-quote-num').textContent = qStr;
+
+// ── STATE ──
+let clienteTipo='', bizMult=1, bizNombre='';
+let servicio=null, detalleData=null;
+let zonaRecargo=0, zonaNombre='GDL Centro';
+let ubicacionTexto='';
+let units=[];
+let unitCounter=0;
+
+// ── PIPE PRICES BY TONNAGE ──
+const PIPE={inst1tr:350,inst2tr:400,inst2_5tr:430,inst3tr:400,inst4tr:480,inst5tr:550};
+
+// ── WALL / DIFFICULTY / FLOOR ──
+const WALLS=[
+  {label:'Drywall / Tablaroca',extra:0},
+  {label:'Block / Tabicón',extra:200},
+  {label:'Ladrillo / Brick',extra:350},
+  {label:'Concreto / Cemento',extra:500},
+  {label:'Cantera / Piedra',extra:700},
+];
+const DIFF=[
+  {label:'Normal',extra:0},
+  {label:'Complicado (espacio reducido)',extra:300},
+  {label:'Muy difícil (techo / plafón)',extra:600},
+];
+const FLOORS=[
+  {label:'Planta baja',extra:0},
+  {label:'2do piso',extra:300},
+  {label:'3er piso',extra:500},
+  {label:'4to piso / Azotea',extra:800},
+];
+
+// ── TONNAGE OPTIONS ──
+const TONS=[
+  {id:'inst1tr',  label:'1 Tonelada',  base:2000, equipoExtra:1000},
+  {id:'inst2tr',  label:'2 Toneladas', base:2500, equipoExtra:1000},
+  {id:'inst3tr',  label:'3 Toneladas', base:2800, equipoExtra:1250},
+  {id:'inst4tr',  label:'4 Toneladas', base:4100, equipoExtra:2750},
+  {id:'inst5tr',  label:'5 Toneladas', base:7000, equipoExtra:4000},
+];
+
+// ── NON-INSTALL SERVICES ──
+const SERVICIOS={
+  mantenimiento:{label:'Paso 4 — Tipo',opciones:[
+    {id:'mant1',label:'Casa · 1 o 2TR',hint:'Limpieza profunda con químico',base:850,consult:false},
+    {id:'mantemp',label:'Empresa · Fan & coil',hint:'Por equipo',base:1200,consult:false},
+    {id:'mant3',label:'3TR o más',hint:'Consultar',base:0,consult:true},
+  ]},
+  reparacion:{label:'Paso 4 — Reparación',opciones:[
+    {id:'repdiag',label:'Solo diagnóstico',hint:'Revisión sin reparar',base:500,consult:false},
+    {id:'repmenor',label:'Reparación menor',hint:'Capacitor · fusible',base:800,consult:false},
+    {id:'repmedia',label:'Reparación media',hint:'Tarjeta · motor',base:1800,consult:false},
+    {id:'repmayor',label:'Reparación mayor',hint:'Compresor · sistema',base:3500,consult:false},
+  ]},
+  electrico:{label:'Paso 4 — Eléctrico',opciones:[
+    {id:'eleccont',label:'Contacto / Apagador',hint:'Por pieza',base:450,consult:false},
+    {id:'electab',label:'Tablero · 4 circuitos',hint:'Instalación completa',base:1500,consult:false},
+    {id:'electabmas',label:'Tablero grande',hint:'Más de 4 circ.',base:0,consult:true},
+    {id:'elecrep',label:'Reparación eléctrica',hint:'Falla existente',base:800,consult:false},
+    {id:'elecurg',label:'Urgencia eléctrica',hint:'Corto · falla grave',base:1800,consult:false},
+  ]},
+  extractor:{label:'Paso 4 — Extractor',opciones:[
+    {id:'extind',label:'Extractor industrial',hint:'Fan & coil · empresa',base:3000,consult:false},
+    {id:'extesp',label:'Sistema especial',hint:'Múltiples · consultar',base:0,consult:true},
+  ]},
+};
+
+const fmt=n=>'$'+Math.round(n).toLocaleString('es-MX');
+const followupDate=()=>{const d=new Date();d.setDate(d.getDate()+3);return d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});};
+
+function getLocation(){
+  if(!navigator.geolocation){alert('Tu dispositivo no soporta geolocalización.');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude.toFixed(5),lng=pos.coords.longitude.toFixed(5);
+    ubicacionTexto=lat+', '+lng;
+    const f=document.getElementById('cli-dir');
+    if(!f.value) f.value='GPS: '+lat+', '+lng;
+    const ok=document.getElementById('loc-ok');
+    ok.style.display='block';
+    setTimeout(()=>ok.style.display='none',3000);
+  },()=>alert('No se pudo obtener la ubicación.'));
+}
+
+function setCliente(tipo){
+  clienteTipo=tipo; bizMult=1; bizNombre='';
+  document.getElementById('btn-casa').classList.toggle('active',tipo==='Casa / Residencia');
+  document.getElementById('btn-negocio').classList.toggle('active',tipo==='Negocio / Empresa');
+  document.getElementById('biz-section').style.display=tipo==='Negocio / Empresa'?'block':'none';
+  document.getElementById('servicio-section').style.display=tipo==='Casa / Residencia'?'block':'none';
+  resetServicio();
+}
+
+function setBiz(el,nombre,mult){
+  bizMult=mult; bizNombre=nombre;
+  document.querySelectorAll('.biz-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('servicio-section').style.display='block';
+  resetServicio();
+}
+
+function resetServicio(){
+  servicio=null; detalleData=null; units=[];
+  ['instalacion','mantenimiento','reparacion','electrico','extractor'].forEach(k=>{
+    const b=document.getElementById('btn-'+k); if(b) b.classList.remove('active');
+  });
+  ['detail','units','zona','extras','result'].forEach(s=>{
+    const el=document.getElementById(s+'-section'); if(el) el.style.display='none';
+  });
+  document.getElementById('units-container').innerHTML='';
+  calc();
+}
+
+function setServicio(key){
+  servicio=key; detalleData=null; units=[];
+  ['instalacion','mantenimiento','reparacion','electrico','extractor'].forEach(k=>{
+    const b=document.getElementById('btn-'+k); if(b) b.classList.remove('active');
+  });
+  document.getElementById('btn-'+key).classList.add('active');
+
+  if(key==='instalacion'){
+    document.getElementById('detail-section').style.display='none';
+    document.getElementById('units-section').style.display='block';
+    document.getElementById('units-container').innerHTML='';
+    addUnit();
+  } else {
+    document.getElementById('units-section').style.display='none';
+    const s=SERVICIOS[key];
+    document.getElementById('detail-label').textContent=s.label;
+    const grid=document.getElementById('detail-grid'); grid.innerHTML='';
+    s.opciones.forEach(op=>{
+      const btn=document.createElement('button');
+      btn.className='sel-btn'; btn.id='dbtn-'+op.id;
+      btn.innerHTML=op.label+'<span class="hint">'+op.hint+'</span>';
+      btn.onclick=()=>setDetalle(op);
+      grid.appendChild(btn);
+    });
+    document.getElementById('detail-section').style.display='block';
+    ['zona','extras','result'].forEach(s=>{
+      const el=document.getElementById(s+'-section'); if(el) el.style.display='none';
+    });
+  }
+}
+
+function setDetalle(op){
+  detalleData=op;
+  document.querySelectorAll('[id^="dbtn-"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dbtn-'+op.id).classList.add('active');
+  document.getElementById('zona-section').style.display='block';
+  document.getElementById('extras-section').style.display='block';
+  document.getElementById('result-section').style.display='block';
+  document.getElementById('toggle-urgente').checked=false;
+  document.getElementById('traslado-input').value=0;
+  document.getElementById('extra-input').value=0;
+  document.getElementById('descuento-input').value=0;
+  document.getElementById('success-box').style.display='none';
+  document.getElementById('error-box').style.display='none';
+  const sb=document.getElementById('send-btn');
+  sb.disabled=false; sb.textContent='ENVIAR COTIZACIÓN A CEI'; sb.style.background='#C62828';
+  calc();
+}
+
+function setZona(el,recargo,nombre){
+  zonaRecargo=recargo; zonaNombre=nombre;
+  document.querySelectorAll('.zone-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); calc();
+}
+
+// ── UNITS ──
+function addUnit(){
+  unitCounter++;
+  const uid='u'+unitCounter;
+  const ton=TONS[0];
+
+  const wallOpts=WALLS.map((w,i)=>`<option value="${i}">${w.label}${w.extra>0?' (+$'+w.extra+')':''}</option>`).join('');
+  const diffOpts=DIFF.map((d,i)=>`<option value="${i}">${d.label}${d.extra>0?' (+$'+d.extra+')':''}</option>`).join('');
+  const floorOpts=FLOORS.map((f,i)=>`<option value="${i}">${f.label}${f.extra>0?' (+$'+f.extra+')':''}</option>`).join('');
+  const tonOpts=TONS.map((t,i)=>`<option value="${i}">${t.label} — ${fmt(t.base)} inst.</option>`).join('');
+
+  const div=document.createElement('div');
+  div.className='unit-card active-unit';
+  div.id='unit-'+uid;
+  div.innerHTML=`
+    <div class="unit-header">
+      <div class="unit-num">UNIDAD ${unitCounter}</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="unit-subtotal" id="sub-${uid}">$0</div>
+        <button class="remove-unit" onclick="removeUnit('${uid}')">✕</button>
+      </div>
+    </div>
+    <div class="unit-row">
+      <div class="unit-row-label">Tonelaje</div>
+      <select id="ton-${uid}" onchange="onUnitChange('${uid}')">
+        ${tonOpts}
+      </select>
+    </div>
+    <div class="unit-row">
+      <div class="unit-row-label">Tipo de pared</div>
+      <select id="wall-${uid}" onchange="onUnitChange('${uid}')">
+        ${wallOpts}
+      </select>
+    </div>
+    <div class="unit-row">
+      <div class="unit-row-label">Dificultad de instalación</div>
+      <select id="diff-${uid}" onchange="onUnitChange('${uid}')">
+        ${diffOpts}
+      </select>
+    </div>
+    <div class="unit-row">
+      <div class="unit-row-label">Piso / Nivel del condensador</div>
+      <select id="floor-${uid}" onchange="onUnitChange('${uid}')">
+        ${floorOpts}
+      </select>
+    </div>
+    <div class="unit-row">
+      <div class="unit-row-label">Metros de tubería / Armaflex / Cable</div>
+      <div class="unit-metros">
+        <div class="metros-controls">
+          <button class="m-btn" onclick="changeUnitM('${uid}',-1)">−</button>
+          <div class="m-val" id="mval-${uid}">0</div>
+          <button class="m-btn" onclick="changeUnitM('${uid}',1)">+</button>
+        </div>
+        <div class="m-price" id="mprice-${uid}">$350/m · $0</div>
+      </div>
+    </div>
+    <div class="unit-equipo">
+      <div>
+        <div class="unit-equipo-label">CEI provee el equipo</div>
+        <div class="unit-equipo-note" id="equipo-note-${uid}">+$1,000 extra</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="equipo-${uid}" onchange="onUnitChange('${uid}')"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+    </div>
+  `;
+  document.getElementById('units-container').appendChild(div);
+
+  units.push({uid, metros:0});
+  updateUnitCount();
+  showZonaExtras();
+  onUnitChange(uid);
+}
+
+function removeUnit(uid){
+  if(units.length<=1){alert('Debe haber al menos una unidad.');return;}
+  units=units.filter(u=>u.uid!==uid);
+  document.getElementById('unit-'+uid).remove();
+  updateUnitCount();
+  calc();
+}
+
+function updateUnitCount(){
+  const n=units.length;
+  document.getElementById('units-count-label').textContent=n+' unidad'+(n!==1?'es':'');
+}
+
+function showZonaExtras(){
+  document.getElementById('zona-section').style.display='block';
+  document.getElementById('extras-section').style.display='block';
+  document.getElementById('result-section').style.display='block';
+  document.getElementById('success-box').style.display='none';
+  document.getElementById('error-box').style.display='none';
+  const sb=document.getElementById('send-btn');
+  sb.disabled=false; sb.textContent='ENVIAR COTIZACIÓN A CEI'; sb.style.background='#C62828';
+}
+
+function changeUnitM(uid, delta){
+  const u=units.find(x=>x.uid===uid);
+  if(!u) return;
+  u.metros=Math.max(0,u.metros+delta);
+  document.getElementById('mval-'+uid).textContent=u.metros;
+  const tonIdx=parseInt(document.getElementById('ton-'+uid).value);
+  const ton=TONS[tonIdx];
+  const pp=PIPE[ton.id]||350;
+  document.getElementById('mprice-'+uid).textContent='$'+pp+'/m · '+fmt(u.metros*pp);
+  calc();
+}
+
+function onUnitChange(uid){
+  const u=units.find(x=>x.uid===uid);
+  if(!u) return;
+  const tonIdx=parseInt(document.getElementById('ton-'+uid).value);
+  const ton=TONS[tonIdx];
+  const pp=PIPE[ton.id]||350;
+  const wallIdx=parseInt(document.getElementById('wall-'+uid).value);
+  const diffIdx=parseInt(document.getElementById('diff-'+uid).value);
+  const floorIdx=parseInt(document.getElementById('floor-'+uid).value);
+  const conEquipo=document.getElementById('equipo-'+uid).checked;
+  const equipoExtra=conEquipo?ton.equipoExtra:0;
+  document.getElementById('equipo-note-'+uid).textContent='+'+fmt(ton.equipoExtra)+' extra';
+  document.getElementById('mprice-'+uid).textContent='$'+pp+'/m · '+fmt(u.metros*pp);
+  const subtotal=ton.base+equipoExtra+(u.metros*pp)+WALLS[wallIdx].extra+DIFF[diffIdx].extra+FLOORS[floorIdx].extra;
+  document.getElementById('sub-'+uid).textContent=fmt(subtotal);
+  calc();
+}
+
+function getUnitSubtotal(uid){
+  const u=units.find(x=>x.uid===uid);
+  if(!u) return 0;
+  const tonIdx=parseInt(document.getElementById('ton-'+uid).value);
+  const ton=TONS[tonIdx];
+  const pp=PIPE[ton.id]||350;
+  const wallIdx=parseInt(document.getElementById('wall-'+uid).value);
+  const diffIdx=parseInt(document.getElementById('diff-'+uid).value);
+  const floorIdx=parseInt(document.getElementById('floor-'+uid).value);
+  const conEquipo=document.getElementById('equipo-'+uid).checked;
+  const equipoExtra=conEquipo?ton.equipoExtra:0;
+  return ton.base+equipoExtra+(u.metros*pp)+WALLS[wallIdx].extra+DIFF[diffIdx].extra+FLOORS[floorIdx].extra;
+}
+
+function calc(){
+  if(servicio==='instalacion'){
+    if(units.length===0) return;
+    let unitsBase=0;
+    units.forEach(u=>unitsBase+=getUnitSubtotal(u.uid));
+    const bizAdd=Math.round(unitsBase*(bizMult-1));
+    const subtotal=unitsBase+bizAdd;
+    const zonaAdd=Math.round(subtotal*zonaRecargo);
+    const urgente=document.getElementById('toggle-urgente')?.checked?650:0;
+    const traslado=parseFloat(document.getElementById('traslado-input')?.value)||0;
+    const extra=parseFloat(document.getElementById('extra-input')?.value)||0;
+    const descuento=parseFloat(document.getElementById('descuento-input')?.value)||0;
+    const total=Math.max(0,subtotal+zonaAdd+urgente+traslado+extra-descuento);
+    const anticipo=Math.round(total*0.5);
+    buildResultRows({unitsBase,bizAdd,zonaAdd,urgente,traslado,extra,descuento,total,anticipo});
+  } else if(detalleData){
+    if(detalleData.consult){
+      document.getElementById('consult-box').style.display='block';
+      document.getElementById('r-total').textContent='Consultar';
+      document.getElementById('r-anticipo').textContent='—';
+      document.getElementById('r-followup').textContent='—';
+      document.getElementById('result-rows').innerHTML='';
+      return;
+    }
+    document.getElementById('consult-box').style.display='none';
+    const base=detalleData.base;
+    const bizAdd=Math.round(base*(bizMult-1));
+    const subtotal=base+bizAdd;
+    const zonaAdd=Math.round(subtotal*zonaRecargo);
+    const urgente=document.getElementById('toggle-urgente')?.checked?650:0;
+    const traslado=parseFloat(document.getElementById('traslado-input')?.value)||0;
+    const extra=parseFloat(document.getElementById('extra-input')?.value)||0;
+    const descuento=parseFloat(document.getElementById('descuento-input')?.value)||0;
+    const total=Math.max(0,subtotal+zonaAdd+urgente+traslado+extra-descuento);
+    const anticipo=Math.round(total*0.5);
+    buildResultRows({base,bizAdd,zonaAdd,urgente,traslado,extra,descuento,total,anticipo});
+  }
+}
+
+function buildResultRows(n){
+  const rows=document.getElementById('result-rows');
+  let html='';
+
+  if(servicio==='instalacion'){
+    html+='<div class="r-row sec"><span>Por unidad</span></div>';
+    units.forEach((u,i)=>{
+      const tonIdx=parseInt(document.getElementById('ton-'+u.uid).value);
+      const ton=TONS[tonIdx];
+      const pp=PIPE[ton.id]||350;
+      const wallIdx=parseInt(document.getElementById('wall-'+u.uid).value);
+      const diffIdx=parseInt(document.getElementById('diff-'+u.uid).value);
+      const floorIdx=parseInt(document.getElementById('floor-'+u.uid).value);
+      const conEquipo=document.getElementById('equipo-'+u.uid).checked;
+      const equipoExtra=conEquipo?ton.equipoExtra:0;
+      const sub=getUnitSubtotal(u.uid);
+      html+=`<div class="r-row unit-sec"><span>Unidad ${i+1} — ${ton.label}</span><span class="r-val">${fmt(sub)}</span></div>`;
+      html+=`<div class="r-row"><span>Instalación base</span><span class="r-val">${fmt(ton.base)}</span></div>`;
+      if(equipoExtra>0) html+=`<div class="r-row"><span>Equipo CEI</span><span class="r-val">+${fmt(equipoExtra)}</span></div>`;
+      if(u.metros>0) html+=`<div class="r-row"><span>Tubería ${u.metros}m ($${pp}/m)</span><span class="r-val">${fmt(u.metros*pp)}</span></div>`;
+      if(WALLS[wallIdx].extra>0) html+=`<div class="r-row"><span>${WALLS[wallIdx].label}</span><span class="r-val">+${fmt(WALLS[wallIdx].extra)}</span></div>`;
+      if(DIFF[diffIdx].extra>0) html+=`<div class="r-row"><span>${DIFF[diffIdx].label}</span><span class="r-val">+${fmt(DIFF[diffIdx].extra)}</span></div>`;
+      if(FLOORS[floorIdx].extra>0) html+=`<div class="r-row"><span>${FLOORS[floorIdx].label}</span><span class="r-val">+${fmt(FLOORS[floorIdx].extra)}</span></div>`;
+    });
+    html+=`<div class="r-row sec"><span>Subtotal unidades</span></div>`;
+    html+=`<div class="r-row highlight"><span>Total unidades</span><span class="r-val">${fmt(n.unitsBase)}</span></div>`;
+  } else {
+    html+=`<div class="r-row sec"><span>Desglose</span></div>`;
+    html+=`<div class="r-row"><span>${detalleData.label}</span><span class="r-val">${fmt(n.base)}</span></div>`;
+  }
+
+  if(n.bizAdd>0) html+=`<div class="r-row"><span>Ajuste ${bizNombre}</span><span class="r-val">+${fmt(n.bizAdd)}</span></div>`;
+  if(n.zonaAdd>0) html+=`<div class="r-row"><span>Recargo · ${zonaNombre}</span><span class="r-val">+${fmt(n.zonaAdd)}</span></div>`;
+  if(n.urgente>0) html+=`<div class="r-row"><span>Urgencia fuera horario</span><span class="r-val">+$650</span></div>`;
+  if(n.traslado>0) html+=`<div class="r-row"><span>Traslado extra</span><span class="r-val">+${fmt(n.traslado)}</span></div>`;
+  if(n.extra>0) html+=`<div class="r-row"><span>Extra adicional</span><span class="r-val">+${fmt(n.extra)}</span></div>`;
+  if(n.descuento>0) html+=`<div class="r-row"><span>Descuento aplicado</span><span class="r-val red">-${fmt(n.descuento)}</span></div>`;
+
+  rows.innerHTML=html;
+  document.getElementById('r-total').textContent=fmt(n.total);
+  document.getElementById('r-anticipo').textContent=fmt(n.anticipo);
+  document.getElementById('r-followup').textContent=followupDate();
+}
+
+function buildDesglose(){
+  if(!servicio) return 'Sin servicio seleccionado';
+  let lines=[];
+  if(servicio==='instalacion'){
+    units.forEach((u,i)=>{
+      const tonIdx=parseInt(document.getElementById('ton-'+u.uid).value);
+      const ton=TONS[tonIdx];
+      const pp=PIPE[ton.id]||350;
+      const wallIdx=parseInt(document.getElementById('wall-'+u.uid).value);
+      const diffIdx=parseInt(document.getElementById('diff-'+u.uid).value);
+      const floorIdx=parseInt(document.getElementById('floor-'+u.uid).value);
+      const conEquipo=document.getElementById('equipo-'+u.uid).checked;
+      const sub=getUnitSubtotal(u.uid);
+      lines.push('--- Unidad '+(i+1)+' ('+ton.label+') ---');
+      lines.push('Instalación: '+fmt(ton.base));
+      if(conEquipo) lines.push('Equipo CEI: +'+fmt(ton.equipoExtra));
+      if(u.metros>0) lines.push('Tubería '+u.metros+'m: '+fmt(u.metros*pp));
+      if(WALLS[wallIdx].extra>0) lines.push(WALLS[wallIdx].label+': +'+fmt(WALLS[wallIdx].extra));
+      if(DIFF[diffIdx].extra>0) lines.push(DIFF[diffIdx].label+': +'+fmt(DIFF[diffIdx].extra));
+      if(FLOORS[floorIdx].extra>0) lines.push(FLOORS[floorIdx].label+': +'+fmt(FLOORS[floorIdx].extra));
+      lines.push('Subtotal: '+fmt(sub));
+      lines.push('');
+    });
+  } else if(detalleData){
+    lines.push(detalleData.label+': '+fmt(detalleData.base));
+  }
+  const urgente=document.getElementById('toggle-urgente')?.checked?650:0;
+  const traslado=parseFloat(document.getElementById('traslado-input')?.value)||0;
+  const extra=parseFloat(document.getElementById('extra-input')?.value)||0;
+  const descuento=parseFloat(document.getElementById('descuento-input')?.value)||0;
+  if(bizNombre) lines.push('Ajuste '+bizNombre);
+  if(zonaRecargo>0) lines.push('Recargo zona '+zonaNombre);
+  if(urgente>0) lines.push('Urgencia fuera horario: +$650');
+  if(traslado>0) lines.push('Traslado: +'+fmt(traslado));
+  if(extra>0) lines.push('Extra: +'+fmt(extra));
+  if(descuento>0) lines.push('Descuento: -'+fmt(descuento));
+  return lines.join('\n');
+}
+
+async function enviarCotizacion(){
+  const nombre=document.getElementById('cli-nombre').value.trim();
+  if(!nombre){alert('Por favor ingresa el nombre del cliente.');return;}
+  if(!servicio){alert('Selecciona un servicio primero.');return;}
+  if(servicio==='instalacion'&&units.length===0){alert('Agrega al menos una unidad.');return;}
+
+  const btn=document.getElementById('send-btn');
+  btn.disabled=true; btn.textContent='ENVIANDO...';
+
+  const total=document.getElementById('r-total').textContent;
+  const anticipo=document.getElementById('r-anticipo').textContent;
+
+  try{
+    await emailjs.send('service_f1mrg9m','template_99r0frj',{
+      cliente_nombre: nombre,
+      cliente_tel: document.getElementById('cli-tel').value||'No especificado',
+      cliente_dir: document.getElementById('cli-dir').value||'No especificada',
+      ubicacion: ubicacionTexto||document.getElementById('cli-dir').value||'No disponible',
+      tipo_cliente: clienteTipo+(bizNombre?' · '+bizNombre:''),
+      servicio: servicio+(detalleData?' · '+detalleData.label:' · '+units.length+' unidades'),
+      zona: zonaNombre,
+      desglose: buildDesglose(),
+      total: total,
+      anticipo: anticipo,
+      fecha_seguimiento: followupDate(),
+      notas: (document.getElementById('cli-notas').value||'Sin notas')+'\n\nCotización: '+qStr,
+    });
+    document.getElementById('success-box').style.display='block';
+    document.getElementById('error-box').style.display='none';
+    btn.textContent='COTIZACIÓN ENVIADA ✓'; btn.style.background='#166534';
+  }catch(err){
+    document.getElementById('error-box').style.display='block';
+    document.getElementById('error-box').textContent='Error al enviar. Verifica tu conexión.';
+    btn.disabled=false; btn.textContent='ENVIAR COTIZACIÓN A CEI';
+  }
+}
+
+function resetAll(){
+  clienteTipo=''; bizMult=1; bizNombre=''; servicio=null; detalleData=null;
+  zonaRecargo=0; zonaNombre='GDL Centro'; units=[]; unitCounter=0; ubicacionTexto='';
+  ['cli-nombre','cli-tel','cli-dir','cli-notas'].forEach(id=>document.getElementById(id).value='');
+  ['btn-casa','btn-negocio'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.querySelectorAll('.biz-btn').forEach(b=>b.classList.remove('active'));
+  ['biz','servicio','detail','units','zona','extras','result'].forEach(s=>{
+    const el=document.getElementById(s+'-section'); if(el) el.style.display='none';
+  });
+  document.getElementById('units-container').innerHTML='';
+  document.getElementById('result-rows').innerHTML='';
+  document.getElementById('success-box').style.display='none';
+  document.getElementById('error-box').style.display='none';
+  document.getElementById('consult-box').style.display='none';
+  const sb=document.getElementById('send-btn');
+  sb.disabled=false; sb.textContent='ENVIAR COTIZACIÓN A CEI'; sb.style.background='#C62828';
+  document.querySelectorAll('.zone-pill').forEach((p,i)=>{p.classList.remove('active');if(i===0)p.classList.add('active');});
+  // new quote number
+  const newNum=parseInt(localStorage.getItem('cei_quote_num')||'0')+1;
+  localStorage.setItem('cei_quote_num',newNum);
+  const newStr='CEI-'+String(newNum).padStart(3,'0');
+  document.getElementById('quote-num').textContent=newStr;
+  document.getElementById('r-quote-num').textContent=newStr;
+}
+</script>
+</body>
+</html>
